@@ -171,7 +171,7 @@ const PatientsModule = {
                                         proceduresLi += `
                                             <li class="d-flex justify-content-between align-items-center mb-1">
                                                 <span class="text-dark-emphasis">${proc.category_name || 'Невідома процедура'}</span>
-                                                <span class="badge bg-light text-secondary border ms-2">${parseFloat(proc.cost).toFixed(2)} грн</span>
+                                               <!-- <span class="badge bg-light text-secondary border ms-2">${parseFloat(proc.cost).toFixed(2)} грн</span> -->
                                             </li>
                                         `;
                                     });
@@ -196,7 +196,7 @@ const PatientsModule = {
                                         <div class="row g-2 style="font-size: 0.85rem;">
                                             <div class="col-md-4">
                                                 <div class="p-2 border rounded h-100 bg-white">
-                                                    <small class="text-muted d-block font-weight-bold mb-1 pb-1 border-bottom">Списані матеріали:</small>
+                                                    <small class="text-muted d-block font-weight-bold mb-1 pb-1 border-bottom">Використані матеріали:</small>
                                                     <ul class="ps-0 mb-0 list-unstyled" style="min-height: 20px;">
                                                         ${materialsLi || '<li class="text-muted italic small">Не використовувались</li>'}
                                                     </ul>
