@@ -186,11 +186,13 @@ const PatientsModule = {
                                             </h6>
                                             <span class="text-muted small">ID: ${w.work_category}</span>
                                         </div>
-                                        <div class="p-2 bg-light rounded mb-3 d-flex gap-2 flex-wrap">
+                                        <!-- Пока что не пишем цены
+                                         <div class="p-2 bg-light rounded mb-3 d-flex gap-2 flex-wrap">
                                             <span class="badge bg-success bg-opacity-75">Ціна для пацієнта: ${parseFloat(w.price).toFixed(2)} грн</span>
                                             <span class="badge bg-danger bg-opacity-75">Витрати: ${parseFloat(w.cost).toFixed(2)} грн</span>
                                             <span class="badge bg-primary">Чистий дохід: ${parseFloat(w.profit).toFixed(2)} грн</span>
-                                        </div>
+                                        </div> 
+                                        -->
                                         <div class="row g-2 style="font-size: 0.85rem;">
                                             <div class="col-md-4">
                                                 <div class="p-2 border rounded h-100 bg-white">
@@ -240,7 +242,7 @@ const PatientsModule = {
                                         <p class="mb-0 text-dark-emphasis">${appt.notes || '<span class="text-muted italic small">відсутні</span>'}</p>
                                     </div>
                                     <h6 class="text-primary mt-3 mb-3 pb-1 border-bottom border-primary-subtle">
-                                        <i class="bi bi-clipboard2-pulse me-1"></i>Деталізація медичних послуг та розрахунок витрат:
+                                        <i class="bi bi-clipboard2-pulse me-1"></i>Деталізація медичних послуг: <! -- та розрахунок витрат: -->
                                     </h6>
                                     ${worksHtml}
                                 </div>
