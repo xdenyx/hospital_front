@@ -209,6 +209,10 @@ class API {
     static getAppointmentWorks() {
         return API.request('/appointment-works/');
     }
+
+    static getWorkFinancials() {
+        return API.request('/reports/work-financials/');
+    }
     
     static createAppointmentWork(data) {
         return API.request('/appointment-works/', {

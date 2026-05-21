@@ -19,21 +19,21 @@ const ReportsModule = {
             const contentDiv = document.getElementById('reportContent');
             contentDiv.innerHTML = '<p class="text-muted">Завантаження звіту...</p>';
             
-            Promise.all([API.getWorkCategories(), API.getAppointmentWorks()])
-                .then(([categories, works]) => {
-                    const reportData = {};
-                    categories.forEach(c => {
-                        reportData[c.id] = { name: c.name, income: 0, expenses: 0, profit: 0 };
-                    });
-                    
-                    works.forEach(w => {
-                        if (reportData[w.work_category]) {
-                            reportData[w.work_category].income += parseFloat(w.price || 0);
-                            reportData[w.work_category].expenses += parseFloat(w.cost || 0);
-                            reportData[w.work_category].profit += parseFloat(w.profit || 0);
-                        }
-                    });
-                    
+            API.getWorkFinancials()
+                .then(reportData => {
+                    if (!reportData || reportData.length === 0) {
+                        contentDiv.innerHTML = `
+                            <div class="alert alert-info mt-4">
+                                Немає даних для формування звіту.
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    let totalIncome = 0;
+                    let totalExpenses = 0;
+                    let totalProfit = 0;
+
                     let html = `
                         <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
                             <h5>Фінансовий звіт за класами робіт</h5>
@@ -51,38 +51,44 @@ const ReportsModule = {
                                 </thead>
                                 <tbody>
                     `;
-                    
-                    let totalInc = 0, totalExp = 0, totalProf = 0;
-                    Object.values(reportData).forEach(row => {
+
+                    reportData.forEach(row => {
+                        const income = parseFloat(row.total_income || 0);
+                        const expenses = parseFloat(row.total_expenses || 0);
+                        const profit = parseFloat(row.net_profit || 0);
+
+                        totalIncome += income;
+                        totalExpenses += expenses;
+                        totalProfit += profit;
+
                         html += `
                             <tr>
                                 <td><strong>${row.name}</strong></td>
-                                <td class="text-success">${row.income.toFixed(2)}</td>
-                                <td class="text-danger">${row.expenses.toFixed(2)}</td>
-                                <td class="text-primary fw-bold">${row.profit.toFixed(2)}</td>
+                                <td class="text-success">${income.toFixed(2)}</td>
+                                <td class="text-danger">${expenses.toFixed(2)}</td>
+                                <td class="text-primary fw-bold">${profit.toFixed(2)}</td>
                             </tr>
                         `;
-                        totalInc += row.income;
-                        totalExp += row.expenses;
-                        totalProf += row.profit;
                     });
-                    
+
                     html += `
                                 </tbody>
                                 <tfoot class="table-dark">
                                     <tr>
                                         <th>Всього:</th>
-                                        <th>${totalInc.toFixed(2)}</th>
-                                        <th>${totalExp.toFixed(2)}</th>
-                                        <th>${totalProf.toFixed(2)}</th>
+                                        <th>${totalIncome.toFixed(2)}</th>
+                                        <th>${totalExpenses.toFixed(2)}</th>
+                                        <th>${totalProfit.toFixed(2)}</th>
                                     </tr>
                                 </tfoot>
                             </table>
                         </div>
                     `;
+
                     contentDiv.innerHTML = html;
                 })
                 .catch(err => {
+                    console.error('Error loading financial report:', err);
                     contentDiv.innerHTML = '<p class="text-danger">Помилка завантаження даних</p>';
                 });
         }, 50);
