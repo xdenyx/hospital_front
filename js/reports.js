@@ -36,7 +36,7 @@ const ReportsModule = {
                     let html = `
                         <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
                             <h5>Фінансовий звіт за класами робіт</h5>
-                            <button class="btn btn-sm btn-secondary" onclick="ReportsModule.render()">← Назад</button>
+                            <!-- <button class="btn btn-sm btn-secondary" onclick="ReportsModule.render()">← Назад</button> -->
                         </div>
                         <div class="card p-0 shadow-sm">
                             <table class="table table-striped table-bordered mb-0">
@@ -114,7 +114,7 @@ const ReportsModule = {
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h5 class="mb-0">Вибірка пацієнтів за виконаними роботами</h5>
-                                <button class="btn btn-sm btn-secondary" onclick="ReportsModule.render()">← До звітів</button>
+                                <!-- <button class="btn btn-sm btn-secondary" onclick="ReportsModule.render()">← До звітів</button> -->
                             </div>
                             <form id="filterPatientsForm" class="row g-3">
                                 <div class="col-md-4">
