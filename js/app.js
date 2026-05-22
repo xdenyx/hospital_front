@@ -164,14 +164,6 @@ class App {
         this.currentModule = ReportsModule;
     }
     
-    showFinancialReport() {
-        ReportsModule.showFinancialReport();
-    }
-    
-    showWorkFinancialReport() {
-        ReportsModule.showWorkFinancialReport();
-    }
-    
     renderDictionaries() {
         DictionariesModule.render();
         this.currentModule = DictionariesModule;
