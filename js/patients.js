@@ -76,6 +76,7 @@ const PatientsModule = {
                     <h5 class="mb-0 fw-bold">${patient ? 'Редагувати картку' : 'Створити нову картку'} пацієнта</h5>
                 </div>
                 <div class="card-body bg-white">
+                    <div id="patientFormError" class="alert alert-danger d-none"></div>
                     <form id="patientFormElement">
                         <div class="mb-3">
                             <label class="form-label fw-bold text-success">ПІБ</label>
@@ -99,21 +100,49 @@ const PatientsModule = {
         document.getElementById('patientFormElement').addEventListener('submit', (e) => {
             e.preventDefault();
             const form = e.target;
+            const errorBox = document.getElementById('patientFormError');
+            errorBox.classList.add('d-none');
+            errorBox.innerHTML = '';
+
             const data = {
                 full_name: form.full_name.value,
                 date_of_birth: form.date_of_birth.value
+            };
+
+            const showValidationErrors = (error) => {
+                const payload = error?.payload || {};
+                const messages = [];
+
+                if (payload.full_name) {
+                    messages.push(`ПІБ: ${Array.isArray(payload.full_name) ? payload.full_name.join(', ') : payload.full_name}`);
+                }
+                if (payload.date_of_birth) {
+                    messages.push(`Дата народження: ${Array.isArray(payload.date_of_birth) ? payload.date_of_birth.join(', ') : payload.date_of_birth}`);
+                }
+                if (!messages.length && error?.message) {
+                    messages.push(error.message);
+                }
+
+                errorBox.innerHTML = `<strong>Перевірте дані</strong><br>`;
+                errorBox.classList.remove('d-none');
             };
             
             if (patient) {
                 API.updatePatient(patient.id, data).then(() => {
                     this.render();
                     app.hideForm();
-                }).catch(err => console.error('Error updating patient:', err));
+                }).catch(err => {
+                    console.error('Error updating patient:', err);
+                    showValidationErrors(err);
+                });
             } else {
                 API.createPatient(data).then(() => {
                     this.render();
                     app.hideForm();
-                }).catch(err => console.error('Error creating patient:', err));
+                }).catch(err => {
+                    console.error('Error creating patient:', err);
+                    showValidationErrors(err);
+                });
             }
         });
     },

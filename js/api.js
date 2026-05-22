@@ -25,9 +25,15 @@ class API {
             }
             if (!res.ok) {
                 return res.json().then(error => {
-                    throw new Error(error.detail || error.error || `HTTP ${res.status}`);
+                    const message = error.detail || error.error || error.message || `HTTP ${res.status}`;
+                    const err = new Error(message);
+                    err.payload = error;
+                    err.status = res.status;
+                    throw err;
                 }).catch(() => {
-                    throw new Error(`HTTP ${res.status}`);
+                    const err = new Error(`HTTP ${res.status}`);
+                    err.status = res.status;
+                    throw err;
                 });
             }
             return res.json();
