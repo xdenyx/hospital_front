@@ -50,7 +50,7 @@ class App {
                 break;
             case 'reports':
                 if (window.IS_ADMIN) {
-                    if (params[0] === 'work-financial') {
+                    if (params[0] === 'work-financial' || !params[0]) {
                         ReportsModule.renderWorkFinancialReport();
                     } else {
                         this.renderReports();
@@ -58,6 +58,10 @@ class App {
                 } else {
                     window.location.hash = '#/';
                 }
+                break;
+            case 'search':
+                ReportsModule.showPatientFilter();
+                this.currentModule = ReportsModule;
                 break;
             case 'dictionaries':
                 this.renderDictionaries();

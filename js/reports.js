@@ -3,10 +3,9 @@ const ReportsModule = {
     render() {
         const app = document.getElementById('app');
         app.innerHTML = `
-            <h2>Звіти та вибірки</h2>
+            <h2>Звіти</h2>
             <div class="mb-4">
                 <a href="#/reports/work-financial" class="btn btn-primary me-2">Звіт по класам робіт</a>
-                <button class="btn btn-info" onclick="ReportsModule.showPatientFilter()">Вибірка пацієнтів за роботами</button>
             </div>
             <div id="reportContent"></div>
         `;
@@ -95,11 +94,15 @@ const ReportsModule = {
     },
     
     showPatientFilter() {
-        this.render();
-        
+        const app = document.getElementById('app');
+        app.innerHTML = `
+            <h2>Пошук</h2>
+            <div id="reportContent"></div>
+        `;
+
         setTimeout(() => {
             const contentDiv = document.getElementById('reportContent');
-            
+
             API.getWorkCategories().then(works => {
                 let workOptions = '<option value="">Оберіть роботу</option>';
                 works.forEach(w => {
@@ -111,7 +114,7 @@ const ReportsModule = {
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h5 class="mb-0">Вибірка пацієнтів за виконаними роботами</h5>
-                                <button class="btn btn-sm btn-secondary" onclick="ReportsModule.render()">← Назад</button>
+                                <button class="btn btn-sm btn-secondary" onclick="ReportsModule.render()">← До звітів</button>
                             </div>
                             <form id="filterPatientsForm" class="row g-3">
                                 <div class="col-md-4">
@@ -142,16 +145,16 @@ const ReportsModule = {
                     const workId = document.getElementById('filterWorkId').value;
                     const startDate = document.getElementById('filterStartDate').value;
                     const endDate = document.getElementById('filterEndDate').value;
-                    
+
                     document.getElementById('filteredResults').innerHTML = '<p>Обробка...</p>';
-                    
+
                     API.request(`/patients/by-work/?work_id=${workId}&start_date=${startDate}&end_date=${endDate}`)
                         .then(patients => {
                             if (patients.length === 0) {
                                 document.getElementById('filteredResults').innerHTML = '<div class="alert alert-warning">За вказаний період пацієнтів не знайдено.</div>';
                                 return;
                             }
-                            
+
                             let html = '<h5 class="mt-3">Результат вибірки:</h5><table class="table table-bordered table-hover mt-2">';
                             html += '<thead class="table-dark"><tr><th>ПІБ</th><th>Дата народження</th><th>Вік</th></tr></thead><tbody>';
                             patients.forEach(p => {
