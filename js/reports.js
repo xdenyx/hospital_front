@@ -140,18 +140,25 @@ const ReportsModule = {
                     <div id="filteredResults" class="mt-4"></div>
                 `;
 
+                const filteredResults = document.getElementById('filteredResults');
+
                 document.getElementById('filterPatientsForm').addEventListener('submit', (e) => {
                     e.preventDefault();
                     const workId = document.getElementById('filterWorkId').value;
                     const startDate = document.getElementById('filterStartDate').value;
                     const endDate = document.getElementById('filterEndDate').value;
 
-                    document.getElementById('filteredResults').innerHTML = '<p>Обробка...</p>';
+                    if (startDate && endDate && startDate > endDate) {
+                        filteredResults.innerHTML = '<div class="alert alert-danger">Дата початку не може бути пізніше дати кінця.</div>';
+                        return;
+                    }
+
+                    filteredResults.innerHTML = '<p>Обробка...</p>';
 
                     API.request(`/patients/by-work/?work_id=${workId}&start_date=${startDate}&end_date=${endDate}`)
                         .then(patients => {
                             if (patients.length === 0) {
-                                document.getElementById('filteredResults').innerHTML = '<div class="alert alert-warning">За вказаний період пацієнтів не знайдено.</div>';
+                                filteredResults.innerHTML = '<div class="alert alert-warning">За вказаний період пацієнтів не знайдено.</div>';
                                 return;
                             }
 
@@ -161,10 +168,11 @@ const ReportsModule = {
                                 html += `<tr><td>${p.full_name}</td><td>${p.date_of_birth}</td><td>${p.age || '-'}</td></tr>`;
                             });
                             html += '</tbody></table>';
-                            document.getElementById('filteredResults').innerHTML = html;
+                            filteredResults.innerHTML = html;
                         })
                         .catch(err => {
-                            document.getElementById('filteredResults').innerHTML = '<div class="alert alert-danger">Помилка завантаження даних</div>';
+                            const message = err?.message || 'Помилка завантаження даних';
+                            filteredResults.innerHTML = `<div class="alert alert-danger">${message}</div>`;
                         });
                 });
             });
