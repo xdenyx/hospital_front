@@ -1,5 +1,7 @@
 // Прийоми та Управління Роботами (Без ручного введення цін)
 const AppointmentsModule = {
+    detailContext: null,
+
     render() {
         const app = document.getElementById('app');
         app.innerHTML = `
@@ -7,8 +9,8 @@ const AppointmentsModule = {
                 <h2 class="text-primary fw-bold">Прийоми</h2>
                 <button class="btn btn-success shadow-sm" onclick="app.showAppointmentForm()">Створити прийом</button>
             </div>
-            <div id="appointmentsList"><p class="text-muted text-center py-4">Завантаження...</p></div>
             <div id="appointmentForm"></div>
+            <div id="appointmentsList"><p class="text-muted text-center py-4">Завантаження...</p></div>
         `;
         API.getAppointments().then(appointments => this.renderList(appointments))
            .catch(err => document.getElementById('appointmentsList').innerHTML = '<div class="alert alert-danger">Помилка при завантаженні</div>');
@@ -44,6 +46,7 @@ const AppointmentsModule = {
     
     showForm(appointmentId = null) {
         const formDiv = document.getElementById('appointmentForm');
+        const focusForm = () => formDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
         Promise.all([API.getRequests(), appointmentId ? API.getAppointment(appointmentId) : Promise.resolve(null)])
             .then(([requests, appointment]) => {
                 let requestOptions = '<option value="">Виберіть заявку</option>';
@@ -75,10 +78,11 @@ const AppointmentsModule = {
                     const requestPromise = appointment ? API.updateAppointment(appointment.id, data) : API.createAppointment(data);
                     requestPromise.then(() => { this.render(); app.hideForm(); }).catch(err => console.error(err));
                 });
+                focusForm();
             }).catch(err => formDiv.innerHTML = '<div class="alert alert-danger">Помилка завантаження</div>');
     },
 
-    showDetail(id) {
+    showDetail(id, focusOptions = null) {
         const appContainer = document.getElementById('app');
         appContainer.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div></div>';
 
@@ -89,75 +93,17 @@ const AppointmentsModule = {
             API.getMedicineCategories(),
             API.getProcedureCategories()
         ]).then(([appt, works, materials, medicines, procedures]) => {
-            
+
+            this.detailContext = {
+                appointmentId: appt.id,
+                workOptions: works,
+                materialOptions: materials,
+                medicineOptions: medicines,
+                procedureOptions: procedures,
+            };
+
             const workOpts = works.map(w => `<option value="${w.id}">${w.name}</option>`).join('');
-            const matOpts = materials.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
-            const medOpts = medicines.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
-            const procOpts = procedures.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-
-            let worksHtml = '';
-            
-            if (appt.works && appt.works.length > 0) {
-                appt.works.forEach(w => {
-                    const renderList = (items) => items.map(i => `
-                        <li class="list-group-item d-flex justify-content-between align-items-center bg-white border rounded py-1 px-2 mb-1">
-                            <span class="small">${i.category_name} ${i.quantity ? `(<b>${i.quantity} шт.</b>)` : ''}</span>
-                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-10">${i.cost} грн</span>
-                        </li>
-                    `).join('');
-
-                    worksHtml += `
-                        <div class="card mb-4 border-info shadow-sm bg-light bg-opacity-50">
-                            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-bottom border-info border-opacity-25">
-                                <h6 class="mb-0 fw-bold text-primary">${w.category_name}</h6>
-                                <div class="d-flex gap-2">
-                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">Ціна: ${w.price} ₴</span>
-                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">Витрати: ${w.cost} ₴</span>
-                                    <span class="badge bg-primary">Прибуток: ${w.profit} ₴</span>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="row g-3">
-                                    <div class="col-md-4">
-                                        <div class="p-2 bg-white rounded border shadow-sm h-100">
-                                            <h6 class="text-muted small text-uppercase fw-bold border-bottom pb-1 mb-2">Матеріали</h6>
-                                            <ul class="list-group list-group-flush mb-2">${w.materials.length ? renderList(w.materials) : '<p class="small text-muted mb-2 fst-italic">Немає матеріалів</p>'}</ul>
-                                            <form onsubmit="AppointmentsModule.addConsumable(event, 'mat', ${w.id}, ${appt.id})" class="mt-2 border-top pt-2">
-                                                <select class="form-select form-select-sm mb-1" name="cat" required><option value="">+ Обрати матеріал</option>${matOpts}</select>
-                                                <input type="number" class="form-control form-control-sm mb-1" name="qty" placeholder="Кількість" required min="1" value="1">
-                                                <button type="submit" class="btn btn-sm btn-outline-success w-100">Додати</button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="p-2 bg-white rounded border shadow-sm h-100">
-                                            <h6 class="text-muted small text-uppercase fw-bold border-bottom pb-1 mb-2">Ліки</h6>
-                                            <ul class="list-group list-group-flush mb-2">${w.medicines.length ? renderList(w.medicines) : '<p class="small text-muted mb-2 fst-italic">Немає ліків</p>'}</ul>
-                                            <form onsubmit="AppointmentsModule.addConsumable(event, 'med', ${w.id}, ${appt.id})" class="mt-2 border-top pt-2">
-                                                <select class="form-select form-select-sm mb-1" name="cat" required><option value="">+ Обрати ліки</option>${medOpts}</select>
-                                                <input type="number" class="form-control form-control-sm mb-1" name="qty" placeholder="Кількість" required min="1" value="1">
-                                                <button type="submit" class="btn btn-sm btn-outline-success w-100">Додати</button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="p-2 bg-white rounded border shadow-sm h-100">
-                                            <h6 class="text-muted small text-uppercase fw-bold border-bottom pb-1 mb-2">Супутні процедури</h6>
-                                            <ul class="list-group list-group-flush mb-2">${w.procedures.length ? renderList(w.procedures) : '<p class="small text-muted mb-2 fst-italic">Немає процедур</p>'}</ul>
-                                            <form onsubmit="AppointmentsModule.addConsumable(event, 'proc', ${w.id}, ${appt.id})" class="mt-2 border-top pt-2">
-                                                <select class="form-select form-select-sm mb-1" name="cat" required><option value="">+ Обрати процедуру</option>${procOpts}</select>
-                                                <button type="submit" class="btn btn-sm btn-outline-success w-100 mt-1">Додати</button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-            } else {
-                worksHtml = '<div class="alert alert-light text-center py-4 border text-muted">У цьому прийомі ще не виконано жодної роботи.</div>';
-            }
+            const worksHtml = this.renderWorksContainer(appt);
 
             appContainer.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -173,12 +119,12 @@ const AppointmentsModule = {
                     </div>
                 </div>
 
-                <div class="mb-4">
+                <div id="works-section" class="mb-4">
                     <h5 class="text-dark fw-bold mb-3">Виконані роботи та витрати:</h5>
-                    ${worksHtml}
+                    <div id="works-container">${worksHtml}</div>
                 </div>
 
-                <div class="card border-0 shadow-sm bg-light mb-5">
+                <div id="add-work-section" class="card border-0 shadow-sm bg-light mb-5">
                     <div class="card-body p-4">
                         <h5 class="text-primary fw-bold mb-3">Додати роботу</h5>
                         <form onsubmit="AppointmentsModule.addWork(event, ${appt.id})" class="row g-2 align-items-center">
@@ -195,9 +141,157 @@ const AppointmentsModule = {
                     </div>
                 </div>
             `;
+
+            this.focusAfterRefresh(focusOptions);
         }).catch(err => {
             console.error(err);
             appContainer.innerHTML = '<div class="alert alert-danger">Помилка завантаження даних прийому.</div>';
+        });
+    },
+
+    renderWorksContainer(appointment) {
+        if (!appointment.works || appointment.works.length === 0) {
+            return '<div id="works-empty" class="alert alert-light text-center py-4 border text-muted">У цьому прийомі ще не виконано жодної роботи.</div>';
+        }
+        return appointment.works.map(work => this.buildWorkCard(work, appointment.id)).join('');
+    },
+
+    buildWorkCard(work, appointmentId) {
+        const materialOptions = this.detailContext.materialOptions
+            .map(m => `<option value="${m.id}">${m.name}</option>`)
+            .join('');
+        const medicineOptions = this.detailContext.medicineOptions
+            .map(m => `<option value="${m.id}">${m.name}</option>`)
+            .join('');
+        const procedureOptions = this.detailContext.procedureOptions
+            .map(p => `<option value="${p.id}">${p.name}</option>`)
+            .join('');
+
+        return `
+            <div id="work-card-${work.id}" class="card mb-4 border-info shadow-sm bg-light bg-opacity-50">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3 border-bottom border-info border-opacity-25">
+                    <h6 class="mb-0 fw-bold text-primary">${work.category_name}</h6>
+                    <div class="d-flex gap-2">
+                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">Ціна: ${work.price} ₴</span>
+                        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">Витрати: ${work.cost} ₴</span>
+                        <span class="badge bg-primary">Прибуток: ${work.profit} ₴</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="p-2 bg-white rounded border shadow-sm h-100">
+                                <h6 class="text-muted small text-uppercase fw-bold border-bottom pb-1 mb-2">Матеріали</h6>
+                                <ul class="list-group list-group-flush mb-2">${this.renderConsumablesList(work.materials)}</ul>
+                                <form onsubmit="AppointmentsModule.addConsumable(event, 'mat', ${work.id}, ${appointmentId})" class="mt-2 border-top pt-2">
+                                    <select class="form-select form-select-sm mb-1" name="cat" required><option value="">+ Обрати матеріал</option>${materialOptions}</select>
+                                    <input type="number" class="form-control form-control-sm mb-1" name="qty" placeholder="Кількість" required min="1" value="1">
+                                    <button type="submit" class="btn btn-sm btn-outline-success w-100">Додати</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-2 bg-white rounded border shadow-sm h-100">
+                                <h6 class="text-muted small text-uppercase fw-bold border-bottom pb-1 mb-2">Ліки</h6>
+                                <ul class="list-group list-group-flush mb-2">${this.renderConsumablesList(work.medicines)}</ul>
+                                <form onsubmit="AppointmentsModule.addConsumable(event, 'med', ${work.id}, ${appointmentId})" class="mt-2 border-top pt-2">
+                                    <select class="form-select form-select-sm mb-1" name="cat" required><option value="">+ Обрати ліки</option>${medicineOptions}</select>
+                                    <input type="number" class="form-control form-control-sm mb-1" name="qty" placeholder="Кількість" required min="1" value="1">
+                                    <button type="submit" class="btn btn-sm btn-outline-success w-100">Додати</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-2 bg-white rounded border shadow-sm h-100">
+                                <h6 class="text-muted small text-uppercase fw-bold border-bottom pb-1 mb-2">Супутні процедури</h6>
+                                <ul class="list-group list-group-flush mb-2">${this.renderConsumablesList(work.procedures)}</ul>
+                                <form onsubmit="AppointmentsModule.addConsumable(event, 'proc', ${work.id}, ${appointmentId})" class="mt-2 border-top pt-2">
+                                    <select class="form-select form-select-sm mb-1" name="cat" required><option value="">+ Обрати процедуру</option>${procedureOptions}</select>
+                                    <button type="submit" class="btn btn-sm btn-outline-success w-100 mt-1">Додати</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+    renderConsumablesList(items) {
+        if (!items || !items.length) {
+            return '<p class="small text-muted mb-2 fst-italic">Немає записів</p>';
+        }
+
+        return items.map(item => `
+            <li class="list-group-item d-flex justify-content-between align-items-center bg-white border rounded py-1 px-2 mb-1">
+                <span class="small">${item.category_name} ${item.quantity ? `(<b>${item.quantity} шт.</b>)` : ''}</span>
+                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-10">${item.cost} грн</span>
+            </li>
+        `).join('');
+    },
+
+    refreshWorkCard(appointmentId, workId) {
+        return API.getAppointment(appointmentId).then(appointment => {
+            const work = appointment.works?.find(item => item.id === workId);
+            if (!work) {
+                this.showDetail(appointmentId, { workId });
+                return;
+            }
+
+            const existingCard = document.getElementById(`work-card-${workId}`);
+            if (!existingCard) {
+                this.showDetail(appointmentId, { workId });
+                return;
+            }
+
+            existingCard.outerHTML = this.buildWorkCard(work, appointmentId);
+            this.focusAfterRefresh({ workId });
+        });
+    },
+
+    appendNewWorkCard(appointmentId, workId) {
+        return API.getAppointment(appointmentId).then(appointment => {
+            const work = appointment.works?.find(item => item.id === workId);
+            if (!work) {
+                this.showDetail(appointmentId, { workId, section: 'add-work' });
+                return;
+            }
+
+            const worksContainer = document.getElementById('works-container');
+            if (!worksContainer) {
+                this.showDetail(appointmentId, { workId, section: 'add-work' });
+                return;
+            }
+
+            const emptyState = document.getElementById('works-empty');
+            if (emptyState) {
+                emptyState.remove();
+            }
+
+            worksContainer.insertAdjacentHTML('beforeend', this.buildWorkCard(work, appointmentId));
+            this.focusAfterRefresh({ workId });
+        });
+    },
+
+    focusAfterRefresh(focusOptions) {
+        if (!focusOptions) {
+            return;
+        }
+
+        requestAnimationFrame(() => {
+            let targetElement = null;
+
+            if (focusOptions.workId) {
+                targetElement = document.getElementById(`work-card-${focusOptions.workId}`);
+            }
+
+            if (!targetElement && focusOptions.section === 'add-work') {
+                targetElement = document.getElementById('add-work-section');
+            }
+
+            if (targetElement) {
+                targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         });
     },
 
@@ -209,7 +303,14 @@ const AppointmentsModule = {
         };
         
         API.createAppointmentWork(data)
-            .then(() => this.showDetail(appointmentId))
+            .then(createdWork => {
+                if (!createdWork?.id) {
+                    this.showDetail(appointmentId, { section: 'add-work' });
+                    return;
+                }
+                this.appendNewWorkCard(appointmentId, createdWork.id);
+                event.target.reset();
+            })
             .catch(err => alert('Помилка при додаванні роботи!'));
     },
 
@@ -228,7 +329,7 @@ const AppointmentsModule = {
             apiCall = API.createWorkProcedure({ appointment_work: workId, category: categoryId });
         }
 
-        apiCall.then(() => this.showDetail(appointmentId))
+        apiCall.then(() => this.refreshWorkCard(appointmentId, workId))
         .catch(err => {
             console.error(err);
             alert('Помилка при збереженні витрат!');

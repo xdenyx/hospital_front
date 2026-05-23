@@ -11,8 +11,8 @@ const PatientsModule = {
                 </button>
             </div>
             
-            <div id="patientsList"><p class="text-muted text-center py-5">Завантаження...</p></div>
             <div id="patientForm"></div>
+            <div id="patientsList"><p class="text-muted text-center py-5">Завантаження...</p></div>
         `;
         
         API.getPatients().then(patients => {
@@ -56,16 +56,19 @@ const PatientsModule = {
     
     showForm(patientId = null) {
         const formDiv = document.getElementById('patientForm');
+        const focusForm = () => formDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
         
         if (patientId) {
             API.getPatient(patientId).then(patient => {
                 this.renderForm(patient, formDiv);
+                focusForm();
             }).catch(err => {
                 console.error('Error loading patient:', err);
                 formDiv.innerHTML = '<div class="alert alert-danger mt-3">Помилка при завантаженні даних пацієнта</div>';
             });
         } else {
             this.renderForm(null, formDiv);
+            focusForm();
         }
     },
     

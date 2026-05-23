@@ -9,8 +9,8 @@ const RequestsModule = {
                 <button class="btn btn-success" onclick="app.showRequestForm()">Додати</button>
             </div>
             
-            <div id="requestsList"><p class="text-muted">Завантаження...</p></div>
             <div id="requestForm"></div>
+            <div id="requestsList"><p class="text-muted">Завантаження...</p></div>
         `;
         
         API.getRequests().then(requests => {
@@ -52,6 +52,7 @@ const RequestsModule = {
     
     showForm(requestId = null) {
         const formDiv = document.getElementById('requestForm');
+        const focusForm = () => formDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
         
         // ДОДАНО: Тепер ми також завантажуємо список лікарів через API.getDoctors()
         Promise.all([
@@ -61,6 +62,7 @@ const RequestsModule = {
         ])
             .then(([patients, doctors, request]) => {
                 this.renderForm(patients, doctors, request, formDiv);
+                focusForm();
             })
             .catch(err => {
                 console.error('Error loading data:', err);

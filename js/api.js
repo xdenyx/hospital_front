@@ -1,6 +1,6 @@
 // API utilities for REST endpoints
 class API {
-    static BASE_URL = 'https://hospital-course-1.onrender.com';
+    static BASE_URL = 'http://127.0.0.1:8000';
 
     static request(endpoint, options = {}) {
         const url = `${this.BASE_URL}/api${endpoint}`;
