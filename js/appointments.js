@@ -1,6 +1,8 @@
 // Прийоми та Управління Роботами (Без ручного введення цін)
 const AppointmentsModule = {
     detailContext: null,
+    _appointments: [],
+    _sort: { field: 'id', dir: 'asc' },
 
     render() {
         const app = document.getElementById('app');
@@ -18,6 +20,18 @@ const AppointmentsModule = {
     
     renderList(appointments) {
         const list = document.getElementById('appointmentsList');
+        const data = (appointments || []).slice();
+        data.sort((a,b) => {
+            const f = this._sort.field;
+            const dir = this._sort.dir === 'asc' ? 1 : -1;
+            let va = f==='patient' ? (a.request?.patient?.full_name||'') : (f==='doctor' ? (a.request?.doctor?.full_name||'') : a.id);
+            let vb = f==='patient' ? (b.request?.patient?.full_name||'') : (f==='doctor' ? (b.request?.doctor?.full_name||'') : b.id);
+            if (typeof va === 'string') va = va.toLowerCase();
+            if (typeof vb === 'string') vb = vb.toLowerCase();
+            if (va < vb) return -1 * dir;
+            if (va > vb) return 1 * dir;
+            return 0;
+        });
         if (!appointments || appointments.length === 0) {
             list.innerHTML = '<div class="alert alert-light text-center border">Немає прийомів</div>';
             return;
@@ -26,7 +40,7 @@ const AppointmentsModule = {
         let html = '<div class="card shadow-sm border-0"><table class="table table-hover mb-0">';
         html += '<thead class="table-light"><tr><th>ID</th><th>Пацієнт</th><th>Лікар</th><th>Примітки</th><th class="text-end">Дії</th></tr></thead><tbody>';
         
-        appointments.forEach(a => {
+        data.forEach(a => {
             html += `
                 <tr class="align-middle">
                     <td>#${a.id}</td>
@@ -42,6 +56,16 @@ const AppointmentsModule = {
         });
         html += '</tbody></table></div>';
         list.innerHTML = html;
+    },
+
+    sortBy(field) {
+        if (this._sort.field === field) {
+            this._sort.dir = this._sort.dir === 'asc' ? 'desc' : 'asc';
+        } else {
+            this._sort.field = field;
+            this._sort.dir = 'asc';
+        }
+        this.renderList(this._appointments);
     },
     
     showForm(appointmentId = null) {

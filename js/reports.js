@@ -10,6 +10,34 @@ const ReportsModule = {
             <div id="reportContent"></div>
         `;
     },
+
+    sortReportData(data) {
+        if (!data) return [];
+        const s = this._reportSort || { field: 'total_income', dir: 'desc' };
+        const copy = data.slice();
+        copy.sort((a,b) => {
+            const f = s.field;
+            const dir = s.dir === 'asc' ? 1 : -1;
+            let va = parseFloat(a[f] || 0);
+            let vb = parseFloat(b[f] || 0);
+            if (f === 'name') { va = (a.name||'').toLowerCase(); vb = (b.name||'').toLowerCase(); }
+            if (va < vb) return -1 * dir;
+            if (va > vb) return 1 * dir;
+            return 0;
+        });
+        return copy;
+    },
+
+    setReportSort(field) {
+        if (!this._reportSort) this._reportSort = { field, dir: 'desc' };
+        if (this._reportSort.field === field) {
+            this._reportSort.dir = this._reportSort.dir === 'asc' ? 'desc' : 'asc';
+        } else {
+            this._reportSort.field = field;
+            this._reportSort.dir = 'desc';
+        }
+        this.renderWorkFinancialReport();
+    },
     
     renderWorkFinancialReport() {
         this.render();
@@ -20,6 +48,10 @@ const ReportsModule = {
             
             API.getWorkFinancials()
                 .then(reportData => {
+                    this._reportData = reportData || [];
+                    // default sort by total_income desc
+                    this._reportSort = { field: 'total_income', dir: 'desc' };
+                    const sorted = this.sortReportData(this._reportData);
                     if (!reportData || reportData.length === 0) {
                         contentDiv.innerHTML = `
                             <div class="alert alert-info mt-4">
@@ -51,7 +83,7 @@ const ReportsModule = {
                                 <tbody>
                     `;
 
-                    reportData.forEach(row => {
+                    sorted.forEach(row => {
                         const income = parseFloat(row.total_income || 0);
                         const expenses = parseFloat(row.total_expenses || 0);
                         const profit = parseFloat(row.net_profit || 0);

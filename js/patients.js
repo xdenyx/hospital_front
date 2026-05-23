@@ -1,5 +1,8 @@
 // Пацієнти та Протоколи
 const PatientsModule = {
+    _patients: [],
+    _sort: { field: 'full_name', dir: 'asc' },
+
     render() {
         const app = document.getElementById('app');
         
@@ -16,7 +19,8 @@ const PatientsModule = {
         `;
         
         API.getPatients().then(patients => {
-            this.renderList(patients);
+            this._patients = patients || [];
+            this.renderList(this._patients);
         }).catch(err => {
             console.error('Error loading patients:', err);
             document.getElementById('patientsList').innerHTML = '<div class="alert alert-danger">Помилка при завантаженні даних</div>';
@@ -31,10 +35,29 @@ const PatientsModule = {
             return;
         }
         
+        // apply sorting
+        const data = (patients || []).slice();
+        data.sort((a, b) => {
+            const f = this._sort.field;
+            const dir = this._sort.dir === 'asc' ? 1 : -1;
+            let va = a[f];
+            let vb = b[f];
+            if (f === 'age') { va = a.age || 0; vb = b.age || 0; }
+            if (typeof va === 'string') va = va.toLowerCase();
+            if (typeof vb === 'string') vb = vb.toLowerCase();
+            if (va < vb) return -1 * dir;
+            if (va > vb) return 1 * dir;
+            return 0;
+        });
+
         let html = '<div class="card shadow-sm"><table class="table table-hover table-striped mb-0">';
-        html += '<thead class="table-primary text-primary-emphasis"><tr><th>ПІБ</th><th>Дата народження</th><th>Вік</th><th class="text-end">Дії</th></tr></thead><tbody>';
+        html += '<thead class="table-primary text-primary-emphasis"><tr>' +
+            `<th style="cursor:pointer" onclick="PatientsModule.sortBy('full_name')">ПІБ ${this._sort.field==='full_name'?(this._sort.dir==='asc'? '▲':'▼'):''}</th>` +
+            `<th style="cursor:pointer" onclick="PatientsModule.sortBy('date_of_birth')">Дата народження ${this._sort.field==='date_of_birth'?(this._sort.dir==='asc'? '▲':'▼'):''}</th>` +
+            `<th style="cursor:pointer" onclick="PatientsModule.sortBy('age')">Вік ${this._sort.field==='age'?(this._sort.dir==='asc'? '▲':'▼'):''}</th>` +
+            '<th class="text-end">Дії</th></tr></thead><tbody>';
         
-        patients.forEach(p => {
+        data.forEach(p => {
             html += `
                 <tr class="align-middle">
                     <td class="fw-bold text-dark">${p.full_name}</td>
@@ -52,6 +75,16 @@ const PatientsModule = {
         
         html += '</tbody></table></div>';
         list.innerHTML = html;
+    },
+
+    sortBy(field) {
+        if (this._sort.field === field) {
+            this._sort.dir = this._sort.dir === 'asc' ? 'desc' : 'asc';
+        } else {
+            this._sort.field = field;
+            this._sort.dir = 'asc';
+        }
+        this.renderList(this._patients);
     },
     
     showForm(patientId = null) {

@@ -1,5 +1,8 @@
 // Заявки
 const RequestsModule = {
+    _requests: [],
+    _sort: { field: 'datetime', dir: 'asc' },
+
     render() {
         const app = document.getElementById('app');
         
@@ -14,7 +17,8 @@ const RequestsModule = {
         `;
         
         API.getRequests().then(requests => {
-            this.renderList(requests);
+            this._requests = requests || [];
+            this.renderList(this._requests);
         }).catch(err => {
             console.error('Error loading requests:', err);
             document.getElementById('requestsList').innerHTML = '<p class="text-danger">Помилка при завантаженні</p>';
@@ -24,15 +28,28 @@ const RequestsModule = {
     renderList(requests) {
         const list = document.getElementById('requestsList');
         
-        if (!requests || requests.length === 0) {
+        const data = (requests || []).slice();
+        data.sort((a,b) => {
+            const f = this._sort.field;
+            const dir = this._sort.dir === 'asc' ? 1 : -1;
+            let va = (f==='patient' ? (a.patient?.full_name||'') : (f==='doctor' ? (a.doctor?.full_name||'') : a.datetime));
+            let vb = (f==='patient' ? (b.patient?.full_name||'') : (f==='doctor' ? (b.doctor?.full_name||'') : b.datetime));
+            if (typeof va === 'string') va = va.toLowerCase();
+            if (typeof vb === 'string') vb = vb.toLowerCase();
+            if (va < vb) return -1 * dir;
+            if (va > vb) return 1 * dir;
+            return 0;
+        });
+
+        if (!data || data.length === 0) {
             list.innerHTML = '<p class="text-muted">Немає заявок</p>';
             return;
         }
         
         let html = '<table class="table table-striped">';
-        html += '<thead><tr><th>Пацієнт</th><th>Дата/час</th><th>Лікар</th><th>Дії</th></tr></thead><tbody>';
+        html += `<thead><tr><th style="cursor:pointer" onclick="RequestsModule.sortBy('patient')">Пацієнт ${this._sort.field==='patient'?(this._sort.dir==='asc'?'▲':'▼'):''}</th><th style="cursor:pointer" onclick="RequestsModule.sortBy('datetime')">Дата/час ${this._sort.field==='datetime'?(this._sort.dir==='asc'?'▲':'▼'):''}</th><th style="cursor:pointer" onclick="RequestsModule.sortBy('doctor')">Лікар ${this._sort.field==='doctor'?(this._sort.dir==='asc'?'▲':'▼'):''}</th><th>Дії</th></tr></thead><tbody>`;
         
-        requests.forEach(r => {
+        data.forEach(r => {
             const doctorName = r.doctor?.full_name || 'Не призначено';
             html += `
                 <tr>
@@ -48,6 +65,16 @@ const RequestsModule = {
         
         html += '</tbody></table>';
         list.innerHTML = html;
+    },
+
+    sortBy(field) {
+        if (this._sort.field === field) {
+            this._sort.dir = this._sort.dir === 'asc' ? 'desc' : 'asc';
+        } else {
+            this._sort.field = field;
+            this._sort.dir = 'asc';
+        }
+        this.renderList(this._requests);
     },
     
     showForm(requestId = null) {
