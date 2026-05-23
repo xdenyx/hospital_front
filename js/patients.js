@@ -55,6 +55,7 @@ const PatientsModule = {
             `<th style="cursor:pointer" onclick="PatientsModule.sortBy('full_name')">ПІБ ${this._sort.field==='full_name'?(this._sort.dir==='asc'? '▲':'▼'):''}</th>` +
             `<th style="cursor:pointer" onclick="PatientsModule.sortBy('date_of_birth')">Дата народження ${this._sort.field==='date_of_birth'?(this._sort.dir==='asc'? '▲':'▼'):''}</th>` +
             `<th style="cursor:pointer" onclick="PatientsModule.sortBy('age')">Вік ${this._sort.field==='age'?(this._sort.dir==='asc'? '▲':'▼'):''}</th>` +
+            `<th>Телефон</th>` + 
             '<th class="text-end">Дії</th></tr></thead><tbody>';
         
         data.forEach(p => {
@@ -63,6 +64,7 @@ const PatientsModule = {
                     <td class="fw-bold text-dark">${p.full_name}</td>
                     <td>${p.date_of_birth}</td>
                     <td><span class="badge bg-light text-dark border">${p.age || '-'} років</span></td>
+                    <td>${p.phone_number || '<span class="text-muted">—</span>'}</td>
                     <td class="text-end">
                         <button class="btn btn-sm btn-outline-info me-1" onclick="app.editPatient(${p.id})">Редагувати</button>
                         <button class="btn btn-sm btn-primary shadow-sm" onclick="PatientsModule.showDetail(${p.id})">
@@ -122,6 +124,10 @@ const PatientsModule = {
                             <label class="form-label fw-bold text-success">Дата народження</label>
                             <input type="date" class="form-control" name="date_of_birth" value="${patient?.date_of_birth || ''}" required>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-success">Номер телефону</label>
+                            <input type="text" class="form-control" name="phone_number" value="${patient?.phone_number || ''}" placeholder="+380XXXXXXXXX">
+                        </div>
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-success btn-lg">Зберегти</button>
                             <button type="button" class="btn btn-outline-secondary btn-lg" onclick="app.hideForm()">Скасувати</button>
@@ -142,7 +148,8 @@ const PatientsModule = {
 
             const data = {
                 full_name: form.full_name.value,
-                date_of_birth: form.date_of_birth.value
+                date_of_birth: form.date_of_birth.value,
+                phone_number: form.phone_number.value || null
             };
 
             const showValidationErrors = (error) => {
