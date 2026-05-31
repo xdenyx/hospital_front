@@ -156,6 +156,10 @@ const PatientsModule = {
                 const payload = error?.payload || {};
                 const messages = [];
 
+                if (error?.status === 409) {
+                    messages.push("Цей запис уже оновлювався. Оновіть сторінку і спробуйте ще раз.");
+                }
+
                 if (payload.full_name) {
                     messages.push(`ПІБ: ${Array.isArray(payload.full_name) ? payload.full_name.join(', ') : payload.full_name}`);
                 }
@@ -166,11 +170,13 @@ const PatientsModule = {
                     messages.push(error.message);
                 }
 
-                errorBox.innerHTML = `<strong>Перевірте дані</strong><br>`;
+                const title = error?.status === 409 ? 'Конфлікт оновлення' : 'Перевірте дані';
+                errorBox.innerHTML = `<strong>${title}</strong><br>${messages.map(message => `<div>${message}</div>`).join('')}`;
                 errorBox.classList.remove('d-none');
             };
             
             if (patient) {
+                data.version = patient.version;
                 API.updatePatient(patient.id, data).then(() => {
                     this.render();
                     app.hideForm();

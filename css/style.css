@@ -108,6 +108,14 @@ body {
     font-size: 0.875rem;
 }
 
+.consumable-actions {
+    max-width: 100%;
+}
+
+.consumable-actions .btn {
+    white-space: nowrap;
+}
+
 /* Формы */
 .form-control {
     border-radius: 6px;

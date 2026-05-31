@@ -1,6 +1,6 @@
 // API utilities for REST endpoints
 class API {
-    static BASE_URL = 'https://hospital-course-1.onrender.com';
+    static BASE_URL = 'http://127.0.0.1:8000';
 
     static request(endpoint, options = {}) {
         const url = `${this.BASE_URL}/api${endpoint}`;
@@ -36,7 +36,16 @@ class API {
                     throw err;
                 });
             }
-            return res.json();
+            if (res.status === 204) {
+                return null;
+            }
+
+            return res.text().then(text => {
+                if (!text) {
+                    return null;
+                }
+                return JSON.parse(text);
+            });
         });
     }
 
@@ -240,6 +249,13 @@ class API {
     static createWorkMaterial(data) {
         return API.request('/work-materials/', { method: 'POST', body: JSON.stringify(data) });
     }
+
+    static updateWorkMaterial(id, data) {
+        return API.request(`/work-materials/${id}/`, {
+            method: 'PATCH',
+            body: JSON.stringify(data)
+        });
+    }
     
     static deleteWorkMaterial(id) {
         return API.request(`/work-materials/${id}/`, { method: 'DELETE' });
@@ -248,6 +264,13 @@ class API {
     static createWorkMedicine(data) {
         return API.request('/work-medicines/', { method: 'POST', body: JSON.stringify(data) });
     }
+
+    static updateWorkMedicine(id, data) {
+        return API.request(`/work-medicines/${id}/`, {
+            method: 'PATCH',
+            body: JSON.stringify(data)
+        });
+    }
     
     static deleteWorkMedicine(id) {
         return API.request(`/work-medicines/${id}/`, { method: 'DELETE' });
@@ -255,6 +278,13 @@ class API {
 
     static createWorkProcedure(data) {
         return API.request('/work-procedures/', { method: 'POST', body: JSON.stringify(data) });
+    }
+
+    static updateWorkProcedure(id, data) {
+        return API.request(`/work-procedures/${id}/`, {
+            method: 'PATCH',
+            body: JSON.stringify(data)
+        });
     }
     
     static deleteWorkProcedure(id) {
